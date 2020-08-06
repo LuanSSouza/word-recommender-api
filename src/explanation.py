@@ -4,15 +4,16 @@ import numpy as np
 import pandas as pd
 import nltk
 from nltk.corpus import wordnet as wn
+import os
 
 from sqlalchemy import create_engine
 import pymysql
 
 def get_aspects(conn, mov_id):
-    return pd.read_sql('SELECT aspect, score FROM aspect WHERE movie_id = %s' % mov_id, con=conn)
+    return pd.read_sql('SELECT aspect, score FROM ASPECT WHERE movie_id = %s' % mov_id, con=conn)
 
 def get_title(conn, mov_prof, mov_rec):
-    return pd.read_sql('SELECT movie_id, title FROM movie WHERE movie_id in (%s, %s)' % (mov_prof, mov_rec), con=conn, index_col='movie_id')
+    return pd.read_sql('SELECT movie_id, title FROM MOVIE WHERE movie_id in (%s, %s)' % (mov_prof, mov_rec), con=conn, index_col='movie_id')
 
 # get n (number) aspects most important to the movie that
 # has a meaning on wordnet
@@ -32,7 +33,13 @@ def get_n_aspects(number: int, aspects_movie: pd.DataFrame):
 def generate_explanations(profile_itens: list, top_item: int):
     nltk.download('wordnet')
 
-    db_connection_str = 'mysql+pymysql://root:root@localhost/worec'
+    #'mysql+pymysql://admin:wordrecommender@worecdatabase.cqwz8xgsqjwc.us-east-1.rds.amazonaws.com/worec'
+    # db_connection_str = 'mysql+pymysql://root:root@localhost/worec'
+    host = os.environ['DB_HOST']
+    user = os.environ['DB_USER']
+    passw = os.environ['DB_PASSWORD']
+    schema = os.environ['DB_SCHEMA']
+    db_connection_str = "mysql+pymysql://{0}:{1}@{2}/{3}".format(user, passw, host, schema)
     db_connection = create_engine(db_connection_str)
 
     aspects_rec_movie = get_aspects(db_connection, top_item).sort_values('score', ascending=False)
