@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from sqlalchemy import create_engine
+import pymysql
 
 def get_mostwatched():
     train_data = pd.read_csv("datasets/ratings.dat", header=None, names=['user_id', 'movie_id', 'rating'], sep='\t')
@@ -39,3 +41,10 @@ def get_mostwatched():
         imdb_id_vec.append(imbd_id_str)
     
     return imdb_id_vec
+
+def get_mostwatchedfromdb():
+    db_connection_str = 'mysql+pymysql://root:root@localhost/worec'
+    db_connection = create_engine(db_connection_str)
+
+    df = pd.read_sql('SELECT movie_id, imdbID, title Title, year Year, poster Poster FROM movie WHERE poster IS NOT NULL', con=db_connection)
+    return df.to_json(orient="records")

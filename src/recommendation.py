@@ -22,7 +22,7 @@ def calculate_prediction(k, movie, profile, sim_m):
     return total
 
 
-def generate_map(number, k, u_row: pd.Series, sim_m: pd.DataFrame):
+def generate_rec(number, k, u_row: pd.Series, sim_m: pd.DataFrame):
     profile = u_row[u_row == 1]
     prediction = u_row[u_row == 0]
     for m in prediction.index:
@@ -30,9 +30,3 @@ def generate_map(number, k, u_row: pd.Series, sim_m: pd.DataFrame):
 
     prediction = prediction.sort_values(ascending=False)
     return prediction[:number].tolist(), prediction[:number].index
-    
-
-# train_data = pd.read_csv("datasets/ratings.dat", header=None, names=['user_id', 'movie_id', 'rating'], sep='\t')
-
-# # dropping duplicate values 
-# train_data = train_data.sort_values(by='rating').drop_duplicates(subset=['user_id', 'movie_id'])

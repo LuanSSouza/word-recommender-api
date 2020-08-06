@@ -24,9 +24,9 @@ def omdb():
 
 @app.route("/mostwatched", methods = ['GET'])
 def mostwatched():
-    return json.dumps(most.get_mostwatched())
+    return most.get_mostwatchedfromdb()
 
-@app.route("/recommendation", methods = ['GET'])
+@app.route("/recommendation", methods = ['GET', 'POST'])
 def recommendation():
     used_columns = ['user_id', 'movie_id', 'rating']
 
@@ -36,17 +36,21 @@ def recommendation():
     user_item = train_data.pivot(index="user_id", columns="movie_id", values="rating")
     user_item[user_item >= 0] = 1
     user_item[user_item.isna()] = 0
+    print(user_item.columns)
 
     semantic_sim = pd.read_csv("datasets/sim_matrix.csv", header=None)
     semantic_sim.index = user_item.columns
     semantic_sim.columns = user_item.columns
 
-    response, teste = rec.generate_map(3, 5, user_item.loc[8194], semantic_sim)
+    response, teste = rec.generate_rec(3, 5, user_item.loc[8194], semantic_sim)
     return json.dumps(response)
 
 @app.route("/explanation", methods = ['GET', 'POST'])
 def explanation():
     data = request.json
+    if not data or "movies" not in data or "recs" not in data or not data['movies'] or not data['recs']:
+        return 'bad request!', 400
+    
     rated = data['movies']
     recommendation = data['recs']
 
