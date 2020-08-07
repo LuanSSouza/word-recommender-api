@@ -1,13 +1,10 @@
-import os.path
-from random import randrange
 import numpy as np
 import pandas as pd
 import nltk
 from nltk.corpus import wordnet as wn
 import os
 
-from sqlalchemy import create_engine
-import pymysql
+from src.connection import db_connection
 
 def get_aspects(conn, mov_id):
     return pd.read_sql('SELECT aspect, score FROM ASPECT WHERE movie_id = %s' % mov_id, con=conn)
@@ -36,15 +33,6 @@ def generate_explanations(profile_itens: list, top_item: int):
     nltk.data.path.append("/tmp")
 
     nltk.download("wordnet", download_dir = "/tmp")
-
-    #'mysql+pymysql://admin:wordrecommender@worecdatabase.cqwz8xgsqjwc.us-east-1.rds.amazonaws.com/worec'
-    # db_connection_str = 'mysql+pymysql://root:root@localhost/worec'
-    host = os.environ['DB_HOST']
-    user = os.environ['DB_USER']
-    passw = os.environ['DB_PASSWORD']
-    schema = os.environ['DB_SCHEMA']
-    db_connection_str = "mysql+pymysql://{0}:{1}@{2}/{3}".format(user, passw, host, schema)
-    db_connection = create_engine(db_connection_str)
 
     aspects_rec_movie = get_aspects(db_connection, top_item).sort_values('score', ascending=False)
 

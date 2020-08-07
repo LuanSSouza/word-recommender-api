@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
-from sqlalchemy import create_engine
-import pymysql
+from src.connection import db_connection
 import os
 
 def get_mostwatched():
@@ -44,12 +43,5 @@ def get_mostwatched():
     return imdb_id_vec
 
 def get_mostwatchedfromdb():
-    host = os.environ['DB_HOST']
-    user = os.environ['DB_USER']
-    passw = os.environ['DB_PASSWORD']
-    schema = os.environ['DB_SCHEMA']
-    db_connection_str = "mysql+pymysql://{0}:{1}@{2}/{3}".format(user, passw, host, schema)
-    db_connection = create_engine(db_connection_str)
-
     df = pd.read_sql('SELECT movie_id, imdbID, title Title, year Year, poster Poster FROM MOVIE WHERE poster IS NOT NULL', con=db_connection)
     return df.to_json(orient="records")
