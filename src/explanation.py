@@ -31,7 +31,11 @@ def get_n_aspects(number: int, aspects_movie: pd.DataFrame):
     return output
 
 def generate_explanations(profile_itens: list, top_item: int):
-    nltk.download('wordnet')
+    # nltk.download('wordnet')
+    
+    nltk.data.path.append("/tmp")
+
+    nltk.download("wordnet", download_dir = "/tmp")
 
     #'mysql+pymysql://admin:wordrecommender@worecdatabase.cqwz8xgsqjwc.us-east-1.rds.amazonaws.com/worec'
     # db_connection_str = 'mysql+pymysql://root:root@localhost/worec'
