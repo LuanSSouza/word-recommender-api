@@ -1,14 +1,12 @@
 from flask import Flask, request
 from flask_cors import CORS
-import requests
-import os
-import json
 
 import src.most_watched as most
 import src.recommendation as rec
 import src.justifications as just
 import src.explanation as exp
 import src.users as users
+import src.omdb as omdbCtrl
 import pandas as pd
 
 app = Flask(__name__)
@@ -20,9 +18,7 @@ def hello():
 
 @app.route("/omdb", methods = ['GET'])
 def omdb():
-    payload = { 'apikey': os.environ['API_KEY'], 'type': 'movie', 's': request.args.get('title') }
-    r = requests.get("http://www.omdbapi.com/", params=payload)
-    return r.json()
+    return omdbCtrl.omdb(request.args.get('title'))
 
 @app.route("/mostwatched", methods = ['GET'])
 def mostwatched():
@@ -33,7 +29,7 @@ def recommendation():
     data = request.json
     if not data or "movies" not in data or not data['movies']:
         return 'bad request!', 400
-        
+
     return rec.recommendation(data['user_id'], data['movies'])
 
 @app.route("/explanation", methods = ['GET', 'POST'])
