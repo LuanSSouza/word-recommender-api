@@ -43,6 +43,10 @@ def get_mostwatched():
     return imdb_id_vec
 
 def get_mostwatchedfromdb():
-    df = pd.read_sql('SELECT movie_id, imdbID, title Title, year Year, poster Poster FROM MOVIE WHERE poster IS NOT NULL', con=db_connection)
+    df = pd.read_sql(most_watched_stmt(), con=db_connection)
     df['imdbID'] = df['imdbID'].map('tt{0:07d}'.format)
     return df.to_json(orient="records")
+
+def most_watched_stmt():    
+    ids = '0120737, 0167261, 0167260, 0126029, 0172495, 0325980, 0209144, 0378194, 0145487, 0181689'
+    return 'SELECT movie_id, imdbID, title Title, year Year, poster Poster FROM MOVIE WHERE imdbID in ({0})'.format(ids)

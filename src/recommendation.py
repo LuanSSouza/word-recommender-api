@@ -3,6 +3,7 @@ import pandas as pd
 from src.connection import db_connection
 import src.users as users
 import src.explanation as exp
+import src.omdb as omdb
 
 def get_movies(conn, imdb: list):
     imdb = [i[2:] for i in imdb]
@@ -13,6 +14,14 @@ def get_movies(conn, imdb: list):
 def get_movies_data(conn, movie_id: list):
     ids = ",".join(str(i) for i in movie_id)
     return pd.read_sql('SELECT * FROM MOVIE WHERE movie_id in ({0})'.format(ids), con=conn)
+
+def update_movie_poster(movie_id, poster):
+    with db_connection.connect() as conn:
+        with conn.begin():
+            conn.execute(update_movie_poster_stmt(movie_id, poster))
+
+def update_movie_poster_stmt(movie_id, poster):
+    return "UPDATE MOVIE SET poster = '{0}' WHERE movie_id = {1}".format(poster, movie_id)
 
 def calculate_prediction(k, movie, profile, sim_m):
     n = 0
@@ -63,10 +72,13 @@ def recommendation(user_id, movies):
 
     rec = get_movies_data(db_connection, idx.tolist())
     rec["explanation"] = ""
+    rec['imdbID'] = rec['imdbID'].map('tt{0:07d}'.format)
 
     for index, row in rec.iterrows():
         rec["explanation"][index] = exp.generate_explanations(movies.tolist(), row["movie_id"])
-
-    rec['imdbID'] = rec['imdbID'].map('tt{0:07d}'.format)
+        if row["poster"] is None:
+            poster = omdb.omdbById(row["imdbID"])["Poster"]
+            update_movie_poster(row["movie_id"], poster)
+            rec["poster"][index] = poster
 
     return rec.to_json(orient="records")

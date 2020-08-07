@@ -10,7 +10,7 @@ def insert_user(user):
 def insert_user_stmt(user):
     return "INSERT INTO USER (age,gender,education,usedRecSys,terms_accept) VALUES({0}, {1}, {2}, {3}, {4})".format(user['age'],user['gender'],user['education'],user['usedRecSys'],user['terms_accept'])
 
-def insert_user_movie_stmt(user_id, movie: list):
+def insert_user_movie(user_id, movie: list):
     with db_connection.connect() as conn:
         with conn.begin():
             for m in movie:
