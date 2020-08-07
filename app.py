@@ -7,6 +7,7 @@ import json
 import src.most_watched as most
 import src.recommendation as rec
 import src.explanation as exp
+import src.users as users
 import pandas as pd
 
 app = Flask(__name__)
@@ -46,5 +47,10 @@ def explanation():
 
     explanation = exp.generate_explanations(rated, recommendation[0])
     return json.dumps({'explanation': explanation})
+
+@app.route("/user", methods = ['POST'])
+def user():
+    data = request.json
+    return json.dumps(users.insert_user(data))
 
 app.run()
