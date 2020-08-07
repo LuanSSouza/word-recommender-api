@@ -8,6 +8,7 @@ import src.explanation as exp
 import src.users as users
 import src.omdb as omdbCtrl
 import pandas as pd
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -52,11 +53,11 @@ def user():
 @app.route("/rate", methods = ['POST'])
 def rate():
     data = request.json
-    return json.dumps(just.insert_rate(data))
+    return json.dumps(just.insert_rate(data['user_id'], data['rates']))
 
 @app.route("/compare", methods = ['POST'])
 def compare():
     data = request.json
-    return json.dumps(just.insert_comp(data))
+    return json.dumps(just.insert_comp(data['user_id'], data['compares']))
 
 app.run()
