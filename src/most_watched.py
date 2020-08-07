@@ -44,4 +44,5 @@ def get_mostwatched():
 
 def get_mostwatchedfromdb():
     df = pd.read_sql('SELECT movie_id, imdbID, title Title, year Year, poster Poster FROM MOVIE WHERE poster IS NOT NULL', con=db_connection)
+    df['imdbID'] = df['imdbID'].map('tt{0:07d}'.format)
     return df.to_json(orient="records")
