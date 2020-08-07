@@ -29,7 +29,7 @@ def mostwatched():
 @app.route("/recommendation", methods = ['GET', 'POST'])
 def recommendation():
     data = request.json
-    if not data or "movies" not in data or "recs" not in data or not data['movies'] or not data['recs']:
+    if not data or "movies" not in data or not data['movies']:
         return 'bad request!', 400
 
     used_columns = ['user_id', 'movie_id', 'rating']
