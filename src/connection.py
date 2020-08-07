@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 import pymysql
+import os
 
 host = os.environ['DB_HOST']
 user = os.environ['DB_USER']

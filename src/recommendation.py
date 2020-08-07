@@ -4,6 +4,7 @@ from src.connection import db_connection
 import src.users as users
 import src.explanation as exp
 import src.omdb as omdb
+import os
 
 def get_movies(conn, imdb: list):
     imdb = [i[2:] for i in imdb]
@@ -54,7 +55,7 @@ def recommendation(user_id, movies):
 
     used_columns = ['user_id', 'movie_id', 'rating']
 
-    cols = pd.read_csv("../datasets/user_rating.csv", usecols=used_columns)['movie_id'].unique()
+    cols = pd.read_csv(os.environ['DATASET'] + "/user_rating.csv", usecols=used_columns)['movie_id'].unique()
 
     profile = pd.DataFrame(0, index=[1], columns=cols)
 
@@ -64,7 +65,7 @@ def recommendation(user_id, movies):
 
     profile[movies] = 1
 
-    semantic_sim = pd.read_csv("../datasets/sim_matrix.csv", header=None)
+    semantic_sim = pd.read_csv(os.environ['DATASET'] + "/sim_matrix.csv", header=None)
     semantic_sim.index = cols
     semantic_sim.columns = cols
 

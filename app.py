@@ -59,5 +59,3 @@ def rate():
 def compare():
     data = request.json
     return json.dumps(just.insert_comp(data['user_id'], data['compares']))
-
-app.run()
