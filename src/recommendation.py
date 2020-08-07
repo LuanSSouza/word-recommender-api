@@ -1,12 +1,18 @@
 import numpy as np
 import pandas as pd
 from src.connection import db_connection
+import src.users as users
+import src.explanation as exp
 
 def get_movies(conn, imdb: list):
     imdb = [i[2:] for i in imdb]
     ids = ",".join(imdb)
     stmt = 'SELECT movie_id, imdbID FROM MOVIE WHERE imdbID in ({0})'.format(ids)
     return pd.read_sql(stmt, con=conn, index_col='movie_id')
+
+def get_movies_data(conn, movie_id: list):
+    ids = ",".join(str(i) for i in movie_id)
+    return pd.read_sql('SELECT * FROM MOVIE WHERE movie_id in ({0})'.format(ids), con=conn)
 
 def calculate_prediction(k, movie, profile, sim_m):
     n = 0
@@ -35,7 +41,7 @@ def generate_rec(number, k, u_row: pd.Series, sim_m: pd.DataFrame):
     prediction = prediction.sort_values(ascending=False)
     return prediction[:number].tolist(), prediction[:number].index
 
-def recommendation(movies):
+def recommendation(user_id, movies):
 
     used_columns = ['user_id', 'movie_id', 'rating']
 
@@ -44,6 +50,8 @@ def recommendation(movies):
     profile = pd.DataFrame(0, index=[1], columns=cols)
 
     movies = get_movies(db_connection, movies).index
+    
+    users.insert_user_movie_stmt(user_id, movies.tolist())
 
     profile[movies] = 1
 
@@ -51,4 +59,14 @@ def recommendation(movies):
     semantic_sim.index = cols
     semantic_sim.columns = cols
 
-    return generate_rec(3, 5, profile.loc[1], semantic_sim)
+    response, idx = generate_rec(3, 5, profile.loc[1], semantic_sim)
+
+    rec = get_movies_data(db_connection, idx.tolist())
+    rec["explanation"] = ""
+
+    for index, row in rec.iterrows():
+        rec["explanation"][index] = exp.generate_explanations(movies.tolist(), row["movie_id"])
+
+    rec['imdbID'] = rec['imdbID'].map('tt{0:07d}'.format)
+
+    return rec.to_json(orient="records")

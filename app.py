@@ -33,9 +33,8 @@ def recommendation():
     data = request.json
     if not data or "movies" not in data or not data['movies']:
         return 'bad request!', 400
-
-    response, idx = rec.recommendation(data['movies'])
-    return json.dumps(response)
+        
+    return rec.recommendation(data['user_id'], data['movies'])
 
 @app.route("/explanation", methods = ['GET', 'POST'])
 def explanation():
