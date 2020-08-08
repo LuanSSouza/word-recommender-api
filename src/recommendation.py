@@ -61,7 +61,7 @@ def recommendation(user_id, movies):
 
     movies = get_movies(db_connection, movies).index
     
-    users.insert_user_movie_stmt(user_id, movies.tolist())
+    users.insert_user_movie(user_id, movies.tolist())
 
     profile[movies] = 1
 
