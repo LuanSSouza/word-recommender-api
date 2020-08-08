@@ -36,14 +36,10 @@ def recommendation():
 @app.route("/explanation", methods = ['GET', 'POST'])
 def explanation():
     data = request.json
-    if not data or "movies" not in data or "recs" not in data or not data['movies'] or not data['recs']:
+    if not data or "movies" not in data or not data['movies']:
         return 'bad request!', 400
     
-    rated = data['movies']
-    recommendation = data['recs']
-
-    explanation = exp.generate_explanations(rated, recommendation[0])
-    return json.dumps({'explanation': explanation})
+    return exp.generate_explanations_AB(data['user_id'], data['movies'])
 
 @app.route("/user", methods = ['POST'])
 def user():
@@ -59,3 +55,6 @@ def rate():
 def compare():
     data = request.json
     return json.dumps(just.insert_comp(data['user_id'], data['compares']))
+
+if __name__ == "__main__":
+    app.run()
