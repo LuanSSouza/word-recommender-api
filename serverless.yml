@@ -16,6 +16,7 @@ provider:
   stage: dev
   region: us-east-1
   memorySize: 2048
+  timeout: 20
 
 package:
   exclude:
