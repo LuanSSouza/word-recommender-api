@@ -10,18 +10,34 @@ def get_movies_data(conn, imdb: list):
     ids = ",".join(imdb)
     return pd.read_sql('SELECT * FROM MOVIE WHERE imdbID in ({0})'.format(ids), con=conn)
 
-def omdb(title):
-    payload = { 'apikey': os.environ['API_KEY'], 'type': 'movie', 's': title }
-    r = requests.get("http://www.omdbapi.com/", params=payload)
-    search = r.json()["Search"]
-    imdbs = [s["imdbID"] for s in search]
-    movies = get_movies_data(db_connection, imdbs)
-    movies['imdbID'] = movies['imdbID'].map('tt{0:07d}'.format)
-    for s in search:
-        movies.loc[movies['imdbID'] == s["imdbID"], 'poster'] = s["Poster"]
-    movies.columns = ["movie_id", "imdbID", "Title", "Year", "imdbURL", "Poster"]
-    
-    return { "Search": json.loads(movies.to_json(orient="records"))}
+def get_movies_data_year(conn, year):
+    if year != '':
+        return pd.read_sql("SELECT * FROM MOVIE WHERE Year = '{0}' and Poster != '{1}'".format(year, 'N'), con=conn)
+    else:
+        print("passou")
+        return pd.DataFrame()
+   
+
+def omdb(title, year):
+    if title != '':
+        print("entrou2")
+        payload = { 'apikey': os.environ['API_KEY'], 'type': 'movie', 's': title, 'y': year }
+        r = requests.get("http://www.omdbapi.com/", params=payload)
+        search = r.json()["Search"]
+        imdbs = [s["imdbID"] for s in search]
+        movies = get_movies_data(db_connection, imdbs)
+        movies['imdbID'] = movies['imdbID'].map('tt{0:07d}'.format)
+        for s in search:
+            movies.loc[movies['imdbID'] == s["imdbID"], 'poster'] = s["Poster"]
+        
+        movies.columns = ["movie_id", "imdbID", "Title", "Year", "imdbURL", "Poster"]
+        return { "Search": json.loads(movies.to_json(orient="records"))}
+
+    else:
+        movies = get_movies_data_year(db_connection, year)
+        movies.columns = ["movie_id", "imdbID", "Title", "Year", "imdbURL", "Poster"]
+        return { "Search": json.loads(movies.to_json(orient="records"))}
+
 
 def omdbById(imdbID):
     payload = { 'apikey': os.environ['API_KEY'], 'type': 'movie', 'i': imdbID }

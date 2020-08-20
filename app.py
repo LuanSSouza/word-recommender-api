@@ -19,7 +19,7 @@ def hello():
 
 @app.route("/omdb", methods = ['GET'])
 def omdb():
-    return omdbCtrl.omdb(request.args.get('title'))
+    return omdbCtrl.omdb(request.args.get('title'), request.args.get('year'))
 
 @app.route("/mostwatched", methods = ['GET'])
 def mostwatched():
