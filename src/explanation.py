@@ -87,7 +87,10 @@ def generate_explanations_compare(profile_itens: list, top_item: int):
 
     aspects_rec_movie = get_aspects(db_connection, top_item).sort_values('score', ascending=False)
 
-    top_rec_aspects = get_n_aspects(5, aspects_rec_movie)
+    if aspects_rec_movie.empty:
+        top_rec_aspects = []
+    else:
+        top_rec_aspects = get_n_aspects(5, aspects_rec_movie)
     max = 0
     word_p = ""
     word_r = ""
@@ -95,6 +98,8 @@ def generate_explanations_compare(profile_itens: list, top_item: int):
 
     for p_movie in profile_itens:
         aspects_profile_movie = get_aspects(db_connection, p_movie).sort_values('score', ascending=False)
+        if aspects_profile_movie.empty:
+            break
 
         top_profile_aspects = get_n_aspects(5, aspects_profile_movie)
         for p_aspects in top_profile_aspects:
@@ -109,7 +114,7 @@ def generate_explanations_compare(profile_itens: list, top_item: int):
     if movie_pro == 0:
         mv_data = get_title(db_connection, profile_itens[0], top_item)
         return "Because you rated well the movie \"" + mv_data['title'][top_item] + "\" watch \"" + \
-               mv_data['title'][profile_itens[0]] + "\""
+               mv_data['title'][profile_itens[0]] + "\"", mv_data['title'][top_item], mv_data['title'][profile_itens[0]]
 
     mv_data = get_title(db_connection, movie_pro, top_item)
 
