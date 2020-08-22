@@ -4,6 +4,7 @@ from src.connection import db_connection
 import src.users as users
 import src.explanation as exp
 import src.omdb as omdb
+import json
 import os
 
 def get_movies(conn, imdb: list):
@@ -69,17 +70,18 @@ def recommendation(user_id, movies):
     semantic_sim.index = cols
     semantic_sim.columns = cols
 
-    response, idx = generate_rec(3, 5, profile.loc[1], semantic_sim)
+    response_semantic, idx_semantic = generate_rec(5, 5, profile.loc[1], semantic_sim)
 
-    rec = get_movies_data(db_connection, idx.tolist())
-    rec["explanation"] = ""
-    rec['imdbID'] = rec['imdbID'].map('tt{0:07d}'.format)
+    rec_semantic = get_movies_data(db_connection, idx_semantic.tolist())
+    rec_semantic['imdbID'] = rec_semantic['imdbID'].map('tt{0:07d}'.format)
 
-    for index, row in rec.iterrows():
-        rec["explanation"][index] = exp.generate_explanations(movies.tolist(), row["movie_id"])
-        if row["poster"] is None:
-            poster = omdb.omdbById(row["imdbID"])["Poster"]
-            update_movie_poster(row["movie_id"], poster)
-            rec["poster"][index] = poster
+    baseline_sim = pd.read_csv(os.environ['DATASET'] + "/cosine_sim_matrix_5.csv", header=None)
+    baseline_sim.index = cols
+    baseline_sim.columns = cols
 
-    return rec.to_json(orient="records")
+    response_baseline, idx_baseline = generate_rec(5, 5, profile.loc[1], baseline_sim)
+
+    rec_baseline = get_movies_data(db_connection, idx_baseline.tolist())
+    rec_baseline['imdbID'] = rec_baseline['imdbID'].map('tt{0:07d}'.format)
+
+    return { "semantic" : json.loads(rec_semantic.to_json(orient="records")), "baseline": json.loads(rec_baseline.to_json(orient="records")) } 
