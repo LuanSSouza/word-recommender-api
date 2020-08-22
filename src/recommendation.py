@@ -25,6 +25,42 @@ def update_movie_poster(movie_id, poster):
 def update_movie_poster_stmt(movie_id, poster):
     return "UPDATE MOVIE SET poster = '{0}' WHERE movie_id = {1}".format(poster, movie_id)
 
+def insert_reclist1(user_id):
+    with db_connection.connect() as conn:
+        with conn.begin():
+            result = conn.execute(insert_reclist1_stmt(user_id)).lastrowid
+    return result
+
+def insert_reclist1_stmt(user_id):
+    return "INSERT INTO RECLIST1 (user_id) VALUES({0})".format(user_id)
+
+def insert_reclist1movie(reclist1_id, movie: list):
+    with db_connection.connect() as conn:
+        with conn.begin():
+            for m in movie:
+                conn.execute(insert_reclist1movie_stmt(reclist1_id, m))
+
+def insert_reclist1movie_stmt(reclist1_id, movie_id):
+    return "INSERT INTO RECLIST1MOVIE (reclist1_id, movie_id) VALUES({0}, {1})".format(reclist1_id, movie_id)
+
+def insert_reclist2(user_id):
+    with db_connection.connect() as conn:
+        with conn.begin():
+            result = conn.execute(insert_reclist2_stmt(user_id)).lastrowid
+    return result
+
+def insert_reclist2_stmt(user_id):
+    return "INSERT INTO RECLIST2 (user_id) VALUES({0})".format(user_id)
+
+def insert_reclist2movie(reclist2_id, movie: list):
+    with db_connection.connect() as conn:
+        with conn.begin():
+            for m in movie:
+                conn.execute(insert_reclist2movie_stmt(reclist2_id, m))
+
+def insert_reclist2movie_stmt(reclist2_id, movie_id):
+    return "INSERT INTO RECLIST2MOVIE (reclist2_id, movie_id) VALUES({0}, {1})".format(reclist2_id, movie_id)
+
 def calculate_prediction(k, movie, profile, sim_m):
     n = 0
     i = 0
@@ -75,6 +111,9 @@ def recommendation(user_id, movies):
     rec_semantic = get_movies_data(db_connection, idx_semantic.tolist())
     rec_semantic['imdbID'] = rec_semantic['imdbID'].map('tt{0:07d}'.format)
 
+    reclist1_id = insert_reclist1(user_id)
+    insert_reclist1movie(reclist1_id, rec_semantic["movie_id"].tolist())
+
     baseline_sim = pd.read_csv(os.environ['DATASET'] + "/cosine_sim_matrix_5.csv", header=None)
     baseline_sim.index = cols
     baseline_sim.columns = cols
@@ -84,4 +123,9 @@ def recommendation(user_id, movies):
     rec_baseline = get_movies_data(db_connection, idx_baseline.tolist())
     rec_baseline['imdbID'] = rec_baseline['imdbID'].map('tt{0:07d}'.format)
 
-    return { "semantic" : json.loads(rec_semantic.to_json(orient="records")), "baseline": json.loads(rec_baseline.to_json(orient="records")) } 
+    reclist2_id = insert_reclist2(user_id)
+    insert_reclist2movie(reclist2_id, rec_baseline["movie_id"].tolist())
+
+    semantic = json.loads(rec_semantic.to_json(orient="records"))
+    baseline = json.loads(rec_baseline.to_json(orient="records"))
+    return { "reclist1_id": reclist1_id, "semantic" : semantic, "baseline": baseline, "reclist2_id": reclist2_id } 
