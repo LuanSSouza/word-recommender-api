@@ -14,13 +14,13 @@ def get_movies_data_year(conn, year):
     if year != '':
         return pd.read_sql("SELECT * FROM MOVIE WHERE Year = '{0}' and Poster != '{1}'".format(year, 'N'), con=conn)
     else:
-        print("passou")
+        # print("passou")
         return pd.DataFrame()
    
 
 def omdb(title, year):
     if title != '':
-        print("entrou2")
+        # print("entrou2")
         payload = { 'apikey': os.environ['API_KEY'], 'type': 'movie', 's': title, 'y': year }
         r = requests.get("http://www.omdbapi.com/", params=payload)
         search = r.json()["Search"]

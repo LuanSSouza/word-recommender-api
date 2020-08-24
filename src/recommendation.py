@@ -114,6 +114,21 @@ def recommendation(user_id, movies):
     reclist1_id = insert_reclist1(user_id)
     insert_reclist1movie(reclist1_id, rec_semantic["movie_id"].tolist())
 
+    semantic = json.loads(rec_semantic.to_json(orient="records"))
+    return { "reclist1_id": reclist1_id, "semantic" : semantic } 
+
+def baseline(user_id, movies):
+
+    used_columns = ['user_id', 'movie_id', 'rating']
+
+    cols = pd.read_csv(os.environ['DATASET'] + "/user_rating.csv", usecols=used_columns)['movie_id'].unique()
+
+    profile = pd.DataFrame(0, index=[1], columns=cols)
+
+    movies = get_movies(db_connection, movies).index
+
+    profile[movies] = 1
+
     baseline_sim = pd.read_csv(os.environ['DATASET'] + "/cosine_sim_matrix_5.csv", header=None)
     baseline_sim.index = cols
     baseline_sim.columns = cols
@@ -125,7 +140,5 @@ def recommendation(user_id, movies):
 
     reclist2_id = insert_reclist2(user_id)
     insert_reclist2movie(reclist2_id, rec_baseline["movie_id"].tolist())
-
-    semantic = json.loads(rec_semantic.to_json(orient="records"))
     baseline = json.loads(rec_baseline.to_json(orient="records"))
-    return { "reclist1_id": reclist1_id, "semantic" : semantic, "baseline": baseline, "reclist2_id": reclist2_id } 
+    return { "baseline": baseline, "reclist2_id": reclist2_id } 

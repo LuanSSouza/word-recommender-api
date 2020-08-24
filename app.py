@@ -33,6 +33,14 @@ def recommendation():
 
     return rec.recommendation(data['user_id'], data['movies'])
 
+@app.route("/baseline", methods = ['GET', 'POST'])
+def baseline():
+    data = request.json
+    if not data or "movies" not in data or not data['movies']:
+        return 'bad request!', 400
+
+    return rec.baseline(data['user_id'], data['movies'])
+
 @app.route("/explanation", methods = ['GET', 'POST'])
 def explanation():
     data = request.json

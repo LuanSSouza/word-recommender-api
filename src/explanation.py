@@ -135,7 +135,7 @@ def generate_explanations_AB(user_id: int, movies: list):
     movies["justA"] = ""
     movies["justB"] = ""
     profile_itens = get_movies(db_connection, user_id)["movie_id"].tolist()
-    print(profile_itens)
+    # print(profile_itens)
     for index, row in movies.iterrows():
         sentence, m_p, m_r = generate_explanations_compare(profile_itens, row["movie_id"])
         movies["justA"][index] = sentence
