@@ -12,7 +12,9 @@ def get_movies_data(conn, imdb: list):
 
 def get_movies_data_year(conn, year):
     if year != '':
-        return pd.read_sql("SELECT * FROM MOVIE WHERE Year = '{0}' and Poster != '{1}'".format(year, 'N'), con=conn)
+        movies = pd.read_sql("SELECT * FROM MOVIE WHERE Year = '{0}' and Poster != '{1}'".format(year, 'N'), con=conn)
+        movies['imdbID'] = movies['imdbID'].map('tt{0:07d}'.format)
+        return movies
     else:
         # print("passou")
         return pd.DataFrame()
@@ -36,6 +38,7 @@ def omdb(title, year):
     else:
         movies = get_movies_data_year(db_connection, year)
         movies.columns = ["movie_id", "imdbID", "Title", "Year", "imdbURL", "Poster"]
+        movies['imdbID'] = movies['imdbID'].map('tt{0:07d}'.format)
         return { "Search": json.loads(movies.to_json(orient="records"))}
 
 
