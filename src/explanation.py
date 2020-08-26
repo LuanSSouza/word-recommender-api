@@ -130,6 +130,24 @@ def generate_explanations_compare(profile_itens: list, top_item: int):
 
     return sentence, movie_pro_name, movie_rec_name
 
+def generate_explanations_baseline(profile_itens, movie_rec):
+    used_columns = ['user_id', 'movie_id', 'rating']
+    cols = pd.read_csv(os.environ['DATASET'] + "/user_rating.csv", usecols=used_columns)['movie_id'].unique()
+
+    baseline_sim = pd.read_csv(os.environ['DATASET'] + "/cosine_sim_matrix_5.csv", header=None)
+    baseline_sim.index = cols
+    baseline_sim.columns = cols
+    baseline = baseline_sim.loc[movie_rec][profile_itens].sort_values(ascending = False)
+    movie_pro = baseline.index[0]
+
+    mv_data = get_title(db_connection, movie_pro, movie_rec)
+
+    movie_pro_name = mv_data['title'][movie_pro]
+    movie_rec_name = mv_data['title'][movie_rec]
+
+    sentence = "Because you rated well the movie \"" + movie_pro_name + "\" watch \"" + movie_rec_name + "\""
+    return sentence
+
 def generate_explanations_AB(user_id: int, movies: list):
     movies = pd.DataFrame(movies)
     movies["justA"] = ""
@@ -139,7 +157,7 @@ def generate_explanations_AB(user_id: int, movies: list):
     for index, row in movies.iterrows():
         sentence, m_p, m_r = generate_explanations_compare(profile_itens, row["movie_id"])
         movies["justA"][index] = sentence
-        movies["justB"][index] = "Because you rated well the movie \"" + m_p + "\" watch \"" + m_r + "\""
+        movies["justB"][index] = generate_explanations_baseline(profile_itens, row['movie_id'])
     
     return movies.to_json(orient="records")
 
