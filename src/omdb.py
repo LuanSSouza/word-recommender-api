@@ -38,7 +38,6 @@ def omdb(title, year):
     else:
         movies = get_movies_data_year(db_connection, year)
         movies.columns = ["movie_id", "imdbID", "Title", "Year", "imdbURL", "Poster"]
-        movies['imdbID'] = movies['imdbID'].map('tt{0:07d}'.format)
         return { "Search": json.loads(movies.to_json(orient="records"))}
 
 
