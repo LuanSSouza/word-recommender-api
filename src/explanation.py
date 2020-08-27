@@ -12,6 +12,10 @@ def get_aspects(conn, mov_id):
 def get_title(conn, mov_prof, mov_rec):
     return pd.read_sql('SELECT movie_id, title FROM MOVIE WHERE movie_id in (%s, %s)' % (mov_prof, mov_rec), con=conn, index_col='movie_id')
 
+def get_titles_movies(conn, mov_prof: list, mov_rec):
+    ids = ",".join(str(i) for i in mov_prof)
+    return pd.read_sql('SELECT movie_id, title FROM MOVIE WHERE movie_id in (%s, %s)' % (ids, mov_rec), con=conn, index_col='movie_id')
+
 def get_movies(conn, user_id):
     stmt = 'SELECT movie_id FROM USERMOVIE WHERE user_id = {0}'.format(user_id)
     return pd.read_sql(stmt, con=conn)
@@ -30,6 +34,11 @@ def get_n_aspects(number: int, aspects_movie: pd.DataFrame):
         index = index + 1
 
     return output
+
+def join_words(words: list):
+    join_w = "\", \"".join(words[:-1])
+    join_w = "\" and \"".join([join_w, words[-1]])
+    return join_w
 
 def generate_explanations(profile_itens: list, top_item: int):
     # nltk.download('wordnet')
@@ -91,6 +100,8 @@ def generate_explanations_compare(profile_itens: list, top_item: int):
         top_rec_aspects = []
     else:
         top_rec_aspects = get_n_aspects(5, aspects_rec_movie)
+    
+    sim_m = pd.DataFrame(columns=['movie_id', 'word_p', 'word_r', 'sim'])
     max = 0
     word_p = ""
     word_r = ""
@@ -105,11 +116,12 @@ def generate_explanations_compare(profile_itens: list, top_item: int):
         for p_aspects in top_profile_aspects:
             for r_aspects in top_rec_aspects:
                 sim = wn.wup_similarity(p_aspects, r_aspects)
-                if sim is not None and sim > max and sim != 1: # TODO sim != 1
-                    max = sim
-                    movie_pro = p_movie
+                if sim is not None and sim != 1:
                     word_p = p_aspects.name().split('.')[0]
                     word_r = r_aspects.name().split('.')[0]
+                    sim_m.loc[len(sim_m)+1] = [p_movie, word_p, word_r, sim]
+                    max = sim
+                    movie_pro = p_movie
 
     if movie_pro == 0:
         mv_data = get_title(db_connection, profile_itens[0], top_item)
@@ -121,12 +133,30 @@ def generate_explanations_compare(profile_itens: list, top_item: int):
     movie_pro_name = mv_data['title'][movie_pro]
     movie_rec_name = mv_data['title'][top_item]
 
-    if word_p != word_r:
-        sentence = "Because you rated well the movie \"" + movie_pro_name + "\" described as \"" \
-                   + word_p + "\" watch \"" + movie_rec_name + "\" described with the similar word \"" + word_r + "\""
+    sim_m = sim_m.sort_values('sim', ascending=False)[:3]
+    movies_pro_ids = sim_m['movie_id'].unique()
+    movie_word_p = sim_m['word_p'].unique()
+    movie_word_r = sim_m['word_r'].unique()
+    mv_data = get_titles_movies(db_connection, movies_pro_ids, top_item)
+
+    sentence = ""
+    if len(movies_pro_ids) > 1:
+        movies = join_words(mv_data['title'][movies_pro_ids].tolist())
+        sentence = "Because you rated well the movies \"" + movies + "\" described as "
     else:
-        sentence = "Because you rated well the movie \"" + movie_pro_name + "\" described as \"" \
-                   + word_p + "\" watch \"" + movie_rec_name + "\" described with the same word"
+        sentence = "Because you rated well the movie \"" + mv_data['title'][movies_pro_ids[0]] + "\" described as "
+    
+    if len(movie_word_p) > 1:
+        words_p = join_words(movie_word_p)
+        sentence += "\"" + words_p + "\" watch \"" + movie_rec_name + "\" "
+    else:
+        sentence += "\"" + movie_word_p[0] + "\" watch \"" + movie_rec_name + "\" "
+
+    if len(movie_word_r) > 1:
+        words_r = join_words(movie_word_r)
+        sentence += "described with the similar words \"" + words_r + "\""
+    else:
+        sentence += "described with the similar word \"" + movie_word_r[0] + "\""
 
     return sentence, movie_pro_name, movie_rec_name
 
