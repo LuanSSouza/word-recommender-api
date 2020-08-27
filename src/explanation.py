@@ -142,21 +142,26 @@ def generate_explanations_compare(profile_itens: list, top_item: int):
     sentence = ""
     if len(movies_pro_ids) > 1:
         movies = join_words(mv_data['title'][movies_pro_ids].tolist())
-        sentence = "Because you rated well the movies \"" + movies + "\" described as "
+        sentence = "People who watched the movies \"" + movies + "\", which you ranked well, have described these movies "
     else:
-        sentence = "Because you rated well the movie \"" + mv_data['title'][movies_pro_ids[0]] + "\" described as "
+        sentence = "People who watched the movie \"" + mv_data['title'][movies_pro_ids[0]] + "\", which you ranked well, have described these movie "
     
     if len(movie_word_p) > 1:
         words_p = join_words(movie_word_p)
-        sentence += "\"" + words_p + "\" watch \"" + movie_rec_name + "\" "
+        sentence += "with the words \"" + words_p + "\". So, watch the movie \"" + movie_rec_name + "\" "
     else:
-        sentence += "\"" + movie_word_p[0] + "\" watch \"" + movie_rec_name + "\" "
+        sentence += "with the word \"" + movie_word_p[0] + "\". So, watch the movie \"" + movie_rec_name + "\" "
 
     if len(movie_word_r) > 1:
         words_r = join_words(movie_word_r)
-        sentence += "described with the similar words \"" + words_r + "\""
+        sentence += ", because it was described with the words \"" + words_r + "\""
     else:
-        sentence += "described with the similar word \"" + movie_word_r[0] + "\""
+        sentence += ", because it was described with the word \"" + movie_word_r[0] + "\""
+    
+    if (len(movie_word_p) > 1):
+        sentence += ", that have similar meaning to the the previous words."
+    else:
+        sentence += ", that have similar meaning to the the previous word."
 
     return sentence, movie_pro_name, movie_rec_name
 
