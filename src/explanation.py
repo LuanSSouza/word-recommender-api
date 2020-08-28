@@ -128,23 +128,19 @@ def generate_explanations_compare(profile_itens: list, top_item: int):
         return "Because you rated well the movie \"" + mv_data['title'][top_item] + "\" watch \"" + \
                mv_data['title'][profile_itens[0]] + "\"", mv_data['title'][top_item], mv_data['title'][profile_itens[0]]
 
-    mv_data = get_title(db_connection, movie_pro, top_item)
+    mv_first = sim_m.sort_values('sim', ascending=False).groupby('movie_id').head(5)
+    mv_first = mv_first.groupby('movie_id')['sim'].mean().sort_values(ascending=False)
+    mv_first = mv_first.index.tolist()[0]
+    mv_data = get_title(db_connection, mv_first, top_item)
 
-    movie_pro_name = mv_data['title'][movie_pro]
+    movie_pro_name = mv_data['title'][mv_first]
     movie_rec_name = mv_data['title'][top_item]
 
-    sim_m = sim_m.sort_values('sim', ascending=False)[:3]
-    movies_pro_ids = sim_m['movie_id'].unique()
+    sim_m = sim_m[sim_m['movie_id'] == mv_first].sort_values('sim', ascending=False)[:3]
     movie_word_p = sim_m['word_p'].unique()
     movie_word_r = sim_m['word_r'].unique()
-    mv_data = get_titles_movies(db_connection, movies_pro_ids, top_item)
 
-    sentence = ""
-    if len(movies_pro_ids) > 1:
-        movies = join_words(mv_data['title'][movies_pro_ids].tolist())
-        sentence = "People who watched the movies \"" + movies + "\", which you ranked well, have described these movies "
-    else:
-        sentence = "People who watched the movie \"" + mv_data['title'][movies_pro_ids[0]] + "\", which you ranked well, have described these movie "
+    sentence = "People who watched the movie \"" + movie_pro_name + "\", which you ranked well, have described these movie "
     
     if len(movie_word_p) > 1:
         words_p = join_words(movie_word_p)
