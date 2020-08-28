@@ -140,24 +140,19 @@ def generate_explanations_compare(profile_itens: list, top_item: int):
     movie_word_p = sim_m['word_p'].unique()
     movie_word_r = sim_m['word_r'].unique()
 
-    sentence = "People who watched the movie \"" + movie_pro_name + "\", which you ranked well, have described these movie "
+    sentence = "Because you watched \"" + movie_pro_name + "\", described as "
     
     if len(movie_word_p) > 1:
         words_p = join_words(movie_word_p)
-        sentence += "with the words \"" + words_p + "\". So, watch the movie \"" + movie_rec_name + "\" "
+        sentence += "\"" + words_p + "\", watch \"" + movie_rec_name + "\" "
     else:
-        sentence += "with the word \"" + movie_word_p[0] + "\". So, watch the movie \"" + movie_rec_name + "\" "
+        sentence += "\"" + movie_word_p[0] + "\", watch \"" + movie_rec_name + "\" "
 
     if len(movie_word_r) > 1:
         words_r = join_words(movie_word_r)
-        sentence += ", because it was described with the words \"" + words_r + "\""
+        sentence += ", described as similar words \"" + words_r + "\"."
     else:
-        sentence += ", because it was described with the word \"" + movie_word_r[0] + "\""
-    
-    if (len(movie_word_p) > 1):
-        sentence += ", that have similar meaning to the the previous words."
-    else:
-        sentence += ", that have similar meaning to the the previous word."
+        sentence += ", described as similar word \"" + movie_word_r[0] + "\"."
 
     return sentence, movie_pro_name, movie_rec_name
 
@@ -179,18 +174,18 @@ def generate_explanations_AB(user_id: int, movies: list):
     movies["justB"] = ""
     profile_itens = get_movies(db_connection, user_id)["movie_id"].tolist()
 
-    used_columns = ['user_id', 'movie_id', 'rating']
-    cols = pd.read_csv(os.environ['DATASET'] + "/user_rating.csv", usecols=used_columns)['movie_id'].unique()
+    # used_columns = ['user_id', 'movie_id', 'rating']
+    # cols = pd.read_csv(os.environ['DATASET'] + "/user_rating.csv", usecols=used_columns)['movie_id'].unique()
 
-    baseline_sim = pd.read_csv(os.environ['DATASET'] + "/cosine_sim_matrix_5.csv", header=None)
-    baseline_sim.index = cols
-    baseline_sim.columns = cols
+    # baseline_sim = pd.read_csv(os.environ['DATASET'] + "/cosine_sim_matrix_5.csv", header=None)
+    # baseline_sim.index = cols
+    # baseline_sim.columns = cols
 
     # print(profile_itens)
     for index, row in movies.iterrows():
         sentence, m_p, m_r = generate_explanations_compare(profile_itens, row["movie_id"])
         movies["justA"][index] = sentence
-        movies["justB"][index] = generate_explanations_baseline(profile_itens, row['movie_id'], baseline_sim)
+        movies["justB"][index] = "Because you rated well the movie \"" + m_p + "\", watch \"" + m_r + "\"."
     
     return movies.to_json(orient="records")
 
