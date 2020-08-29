@@ -24,14 +24,17 @@ def get_movies(conn, user_id):
 # has a meaning on wordnet
 def get_n_aspects(number: int, aspects_movie: pd.DataFrame):
     n = 0
-    index = 0
     output = []
-    while n < number:
-        syns = wn.synsets(aspects_movie.iloc[index][0])
+    for index, row in aspects_movie.iterrows():
+        if n >= number:
+            break
+        aspect = row["aspect"]
+        if not aspect:
+            continue
+        syns = wn.synsets(aspect)
         if len(syns) > 0:
             output.append(syns[0])
             n = n + 1
-        index = index + 1
 
     return output
 
