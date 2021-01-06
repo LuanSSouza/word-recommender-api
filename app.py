@@ -1,13 +1,14 @@
 from flask import Flask, request
 from flask_cors import CORS
-import requests
-import os
-import json
 
 import src.most_watched as most
 import src.recommendation as rec
+import src.justifications as just
 import src.explanation as exp
+import src.users as users
+import src.omdb as omdbCtrl
 import pandas as pd
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -18,9 +19,7 @@ def hello():
 
 @app.route("/omdb", methods = ['GET'])
 def omdb():
-    payload = { 'apikey': os.environ['API_KEY'], 'type': 'movie', 's': request.args.get('title') }
-    r = requests.get("http://www.omdbapi.com/", params=payload)
-    return r.json()
+    return omdbCtrl.omdb(request.args.get('title'), request.args.get('year'))
 
 @app.route("/mostwatched", methods = ['GET'])
 def mostwatched():
@@ -28,34 +27,42 @@ def mostwatched():
 
 @app.route("/recommendation", methods = ['GET', 'POST'])
 def recommendation():
-    used_columns = ['user_id', 'movie_id', 'rating']
+    data = request.json
+    if not data or "movies" not in data or not data['movies']:
+        return 'bad request!', 400
 
-    train_data = pd.read_csv("datasets/train.csv", usecols=used_columns)
+    return rec.recommendation(data['user_id'], data['movies'])
 
-    # generate user/item matrix and mean item and transform it into interactions
-    user_item = train_data.pivot(index="user_id", columns="movie_id", values="rating")
-    user_item[user_item >= 0] = 1
-    user_item[user_item.isna()] = 0
-    print(user_item.columns)
+@app.route("/baseline", methods = ['GET', 'POST'])
+def baseline():
+    data = request.json
+    if not data or "movies" not in data or not data['movies']:
+        return 'bad request!', 400
 
-    semantic_sim = pd.read_csv("datasets/sim_matrix.csv", header=None)
-    semantic_sim.index = user_item.columns
-    semantic_sim.columns = user_item.columns
-
-    response, teste = rec.generate_rec(3, 5, user_item.loc[8194], semantic_sim)
-    return json.dumps(response)
+    return rec.baseline(data['user_id'], data['movies'])
 
 @app.route("/explanation", methods = ['GET', 'POST'])
 def explanation():
     data = request.json
-    if not data or "movies" not in data or "recs" not in data or not data['movies'] or not data['recs']:
+    if not data or "movies" not in data or not data['movies']:
         return 'bad request!', 400
     
-    rated = data['movies']
-    recommendation = data['recs']
+    return exp.generate_explanations_AB(data['user_id'], data['movies'])
 
-    explanation = exp.generate_explanations(rated, recommendation[0])
-    return json.dumps({'explanation': explanation})
+@app.route("/user", methods = ['POST'])
+def user():
+    data = request.json
+    return json.dumps(users.insert_user(data))
 
+@app.route("/rate", methods = ['POST'])
+def rate():
+    data = request.json
+    return json.dumps(just.insert_rate(data['user_id'], data['rates']))
 
-app.run()
+@app.route("/compare", methods = ['POST'])
+def compare():
+    data = request.json
+    return json.dumps(just.insert_comp(data['user_id'], data['compares']))
+
+if __name__ == "__main__":
+    app.run()
